@@ -32,3 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 SpringBoot_Backend_*
+application-secrets.properties
