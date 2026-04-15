@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
-import { Thermometer, Activity, AlertTriangle, CheckCircle, Info, LogOut, UserPlus, X } from 'lucide-react';
+import { Thermometer, Activity, AlertTriangle, CheckCircle, Info, LogOut, UserPlus, X, User } from 'lucide-react';
 
 export default function Dashboard({ onLogout }) {
     const [devices, setDevices] = useState([]);
@@ -135,19 +135,42 @@ export default function Dashboard({ onLogout }) {
                     <h1>Bảng Điều Khiển Tủ Lạnh Y Tế</h1>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    {/* Nút Mở Form Đăng Ký (Dành cho Sếp) */}
-                    <button
-                        onClick={() => setIsRegisterOpen(true)}
-                        style={{ display: 'flex', alignItems: 'center', padding: '10px 15px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-                    >
-                        <UserPlus size={18} style={{ marginRight: '8px' }} />
-                        Tạo tài khoản
-                    </button>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
 
-                    {/* Nút Đăng Xuất */}
+                    {/* KHU VỰC THÔNG TIN CÁ NHÂN (PROFILE) */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginRight: '15px', borderRight: '2px solid #e2e8f0', paddingRight: '20px' }}>
+                        <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontWeight: 'bold', color: '#1e293b', fontSize: '16px' }}>
+                                {localStorage.getItem('user_fullName') || 'Người dùng'}
+                            </div>
+                            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 'bold' }}>
+                                {localStorage.getItem('user_role') === 'ROLE_ADMIN' ? '👑 Quản trị viên' : '🩺 Y tá trực'}
+                            </div>
+                        </div>
+                        <div style={{ backgroundColor: '#e2e8f0', padding: '10px', borderRadius: '50%' }}>
+                            <User size={24} color="#475569" />
+                        </div>
+                    </div>
+
+                    {/* NÚT MỞ FORM ĐĂNG KÝ (CHỈ HIỂN THỊ KHI LÀ ROLE_ADMIN) */}
+                    {localStorage.getItem('user_role') === 'ROLE_ADMIN' && (
+                        <button
+                            onClick={() => setIsRegisterOpen(true)}
+                            style={{ display: 'flex', alignItems: 'center', padding: '10px 15px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                        >
+                            <UserPlus size={18} style={{ marginRight: '8px' }} />
+                            Tạo tài khoản
+                        </button>
+                    )}
+
+                    {/* NÚT ĐĂNG XUẤT */}
                     <button
-                        onClick={onLogout}
+                        onClick={() => {
+                            // Dọn dẹp thông tin khi đăng xuất
+                            localStorage.removeItem('user_fullName');
+                            localStorage.removeItem('user_role');
+                            onLogout();
+                        }}
                         style={{ display: 'flex', alignItems: 'center', padding: '10px 15px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
                     >
                         <LogOut size={18} style={{ marginRight: '8px' }} />

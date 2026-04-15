@@ -15,6 +15,10 @@ export default function Login({ setToken }) {
                 username,
                 password
             });
+
+            // LƯU THÔNG TIN CÁ NHÂN VÀO TRÌNH DUYỆT
+            localStorage.setItem('user_fullName', response.data.fullName);
+            localStorage.setItem('user_role', response.data.role);
             // Nếu đăng nhập thành công, gửi token lên cho App.jsx quản lý
             setToken(response.data.token);
         } catch (err) {
