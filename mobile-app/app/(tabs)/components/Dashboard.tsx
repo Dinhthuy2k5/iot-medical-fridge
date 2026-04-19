@@ -1,13 +1,25 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { Activity, AlertTriangle, CheckCircle, Info, LogOut, Thermometer } from 'lucide-react-native';
+import { AlertTriangle, CheckCircle, Info, Thermometer } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
+
+import Header from './Header';
+import ProfileModal from './ProfileModal';
+import RegisterModal from './RegisterModal';
 
 const SERVER_IP = '192.168.31.105';
 const API_BASE = `http://${SERVER_IP}:8080/api/v1`;
 
 export default function Dashboard({ onLogout }) {
+    // State Modal & User Info
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+    const [fullName, setFullName] = useState('');
+    const [role, setRole] = useState('');
+
+    // State IoT
     const [devices, setDevices] = useState([]);
     const [selectedDevice, setSelectedDevice] = useState(null);
     const [temperatureData, setTemperatureData] = useState([]);
@@ -15,9 +27,24 @@ export default function Dashboard({ onLogout }) {
     const [refreshing, setRefreshing] = useState(false);
 
     useEffect(() => {
+        loadUserProfile();
         fetchDevices();
     }, []);
 
+    const loadUserProfile = async () => {
+        const storedName = await AsyncStorage.getItem('user_fullName');
+        const storedRole = await AsyncStorage.getItem('user_role');
+        if (storedName) setFullName(storedName);
+        if (storedRole) setRole(storedRole);
+    };
+
+    const handleLogout = async () => {
+        await AsyncStorage.removeItem('user_fullName');
+        await AsyncStorage.removeItem('user_role');
+        onLogout();
+    };
+
+    // --- CÁC HÀM FETCH DỮ LIỆU IoT CŨ GIỮ NGUYÊN ---
     useEffect(() => {
         if (selectedDevice) {
             fetchData();
@@ -46,9 +73,7 @@ export default function Dashboard({ onLogout }) {
             const response = await axios.get(`${API_BASE}/temperatures/${deviceId}`);
             const formattedData = response.data.slice(0, 10).reverse().map(log => {
                 const dateObj = new Date(log.recordedAt);
-                const hours = dateObj.getHours().toString().padStart(2, '0');
-                const minutes = dateObj.getMinutes().toString().padStart(2, '0');
-                return { ...log, time: `${hours}:${minutes}` };
+                return { ...log, time: `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}` };
             });
             setTemperatureData(formattedData);
         } catch (error) {
@@ -82,52 +107,40 @@ export default function Dashboard({ onLogout }) {
             if (selectedDevice) {
                 await Promise.all([fetchTemperatureLogs(selectedDevice.id), fetchAlerts(selectedDevice.id)]);
             }
-        } catch (error) {
-            console.log("Refresh failed", error);
-        } finally {
-            setRefreshing(false);
-        }
+        } catch (error) { }
+        finally { setRefreshing(false); }
     }, [selectedDevice]);
 
     const latestData = temperatureData.length > 0 ? temperatureData[temperatureData.length - 1] : null;
-    const isDanger = latestData && selectedDevice &&
-        (latestData.temperature < selectedDevice.minTemp || latestData.temperature > selectedDevice.maxTemp);
+    const isDanger = latestData && selectedDevice && (latestData.temperature < selectedDevice.minTemp || latestData.temperature > selectedDevice.maxTemp);
 
     return (
-        <ScrollView
-            style={styles.container}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#e90e86']} tintColor={'#e90e6d'} />}
-        >
-            {/* Header có nút Đăng xuất */}
-            <View style={styles.header}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                    <Activity color="#0ea5e9" size={28} />
-                    <Text style={styles.headerTitle}>Giám Sát Tủ Y Tế</Text>
-                </View>
-                <TouchableOpacity style={styles.logoutBtn} onPress={onLogout}>
-                    <LogOut color="white" size={18} />
-                </TouchableOpacity>
-            </View>
+        <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#e90e86']} />}>
 
-            {/* Bảng chọn thiết bị */}
+            {/* LẮP RÁP HEADER VÀ MODAL TẠI ĐÂY */}
+            <Header
+                fullName={fullName}
+                role={role}
+                onOpenProfile={() => setIsProfileOpen(true)}
+                onOpenRegister={() => setIsRegisterOpen(true)}
+                onLogout={handleLogout}
+            />
+
+            <ProfileModal visible={isProfileOpen} onClose={() => setIsProfileOpen(false)} initialFullName={fullName} onUpdateSuccess={(newName) => setFullName(newName)} />
+            <RegisterModal visible={isRegisterOpen} onClose={() => setIsRegisterOpen(false)} />
+
+            {/* --- KHU VỰC IoT BÊN DƯỚI GIỮ NGUYÊN --- */}
             <View style={{ marginBottom: 15 }}>
                 <Text style={styles.sectionTitle}>Chọn thiết bị:</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     {devices.map(device => (
-                        <TouchableOpacity
-                            key={device.id}
-                            style={[styles.deviceBtn, selectedDevice?.id === device.id && styles.deviceBtnActive]}
-                            onPress={() => setSelectedDevice(device)}
-                        >
-                            <Text style={[styles.deviceBtnText, selectedDevice?.id === device.id && styles.deviceBtnTextActive]}>
-                                {device.name}
-                            </Text>
+                        <TouchableOpacity key={device.id} style={[styles.deviceBtn, selectedDevice?.id === device.id && styles.deviceBtnActive]} onPress={() => setSelectedDevice(device)}>
+                            <Text style={[styles.deviceBtnText, selectedDevice?.id === device.id && styles.deviceBtnTextActive]}>{device.name}</Text>
                         </TouchableOpacity>
                     ))}
                 </ScrollView>
             </View>
 
-            {/* Cảnh báo đỏ */}
             {alerts.map(alert => (
                 <View key={alert.id} style={styles.alertBox}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
@@ -144,7 +157,6 @@ export default function Dashboard({ onLogout }) {
                 </View>
             ))}
 
-            {/* Thẻ trạng thái */}
             {selectedDevice && latestData ? (
                 <View style={styles.statusCardsContainer}>
                     <View style={styles.statusCard}>
@@ -152,46 +164,27 @@ export default function Dashboard({ onLogout }) {
                             <Thermometer color="#64748b" size={16} />
                             <Text style={styles.cardLabel}>Nhiệt độ</Text>
                         </View>
-                        <Text style={[styles.cardValue, { color: isDanger ? '#ef4444' : '#10b981' }]}>
-                            {latestData.temperature}°C
-                        </Text>
+                        <Text style={[styles.cardValue, { color: isDanger ? '#ef4444' : '#10b981' }]}>{latestData.temperature}°C</Text>
                     </View>
-
                     <View style={[styles.statusCard, { backgroundColor: isDanger ? '#fef2f2' : '#ecfdf5', borderColor: isDanger ? '#fca5a5' : '#6ee7b7', borderWidth: 1 }]}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Info color={isDanger ? '#b91c1c' : '#047857'} size={16} />
                             <Text style={[styles.cardLabel, { color: isDanger ? '#b91c1c' : '#047857' }]}>Trạng thái</Text>
                         </View>
-                        <Text style={[styles.cardValue, { color: isDanger ? '#ef4444' : '#10b981', fontSize: 16 }]}>
-                            {isDanger ? 'NGUY HIỂM' : 'BÌNH THƯỜNG'}
-                        </Text>
+                        <Text style={[styles.cardValue, { color: isDanger ? '#ef4444' : '#10b981', fontSize: 16 }]}>{isDanger ? 'NGUY HIỂM' : 'BÌNH THƯỜNG'}</Text>
                     </View>
                 </View>
             ) : null}
 
-            {/* Biểu đồ */}
             {temperatureData.length > 0 ? (
                 <View style={styles.chartContainer}>
                     <Text style={styles.sectionTitle}>Lịch sử biến động</Text>
                     <LineChart
-                        data={{
-                            labels: temperatureData.map(d => d.time),
-                            datasets: [{ data: temperatureData.map(d => d.temperature) }]
-                        }}
+                        data={{ labels: temperatureData.map(d => d.time), datasets: [{ data: temperatureData.map(d => d.temperature) }] }}
                         width={Dimensions.get("window").width - 30}
-                        height={220}
-                        yAxisSuffix="°C"
-                        chartConfig={{
-                            backgroundColor: "#ffffff",
-                            backgroundGradientFrom: "#ffffff",
-                            backgroundGradientTo: "#ffffff",
-                            decimalPlaces: 1,
-                            color: (opacity = 1) => `rgba(14, 165, 233, ${opacity})`,
-                            labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`,
-                            propsForDots: { r: "5", strokeWidth: "2", stroke: "#0ea5e9" }
-                        }}
-                        bezier
-                        style={{ marginVertical: 8, borderRadius: 16 }}
+                        height={220} yAxisSuffix="°C"
+                        chartConfig={{ backgroundColor: "#ffffff", backgroundGradientFrom: "#ffffff", backgroundGradientTo: "#ffffff", decimalPlaces: 1, color: (opacity = 1) => `rgba(14, 165, 233, ${opacity})`, labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`, propsForDots: { r: "5", strokeWidth: "2", stroke: "#0ea5e9" } }}
+                        bezier style={{ marginVertical: 8, borderRadius: 16 }}
                     />
                 </View>
             ) : null}
@@ -203,9 +196,6 @@ export default function Dashboard({ onLogout }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f1f5f9', padding: 15, paddingTop: 50 },
-    header: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-    headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#1e293b', marginLeft: 10 },
-    logoutBtn: { backgroundColor: '#ef4444', padding: 8, borderRadius: 8 },
     sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#475569', marginBottom: 10 },
     deviceBtn: { paddingHorizontal: 15, paddingVertical: 10, backgroundColor: '#e2e8f0', borderRadius: 20, marginRight: 10 },
     deviceBtnActive: { backgroundColor: '#0ea5e9' },

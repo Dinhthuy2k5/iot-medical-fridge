@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Activity, AlertCircle, Lock, User } from 'lucide-react-native';
 import React, { useState } from 'react';
@@ -22,6 +23,8 @@ export default function Login({ setToken }) {
 
         try {
             const response = await axios.post(`${API_BASE}/auth/login`, { username, password });
+            await AsyncStorage.setItem('user_fullName', response.data.fullName || 'Người dùng');
+            await AsyncStorage.setItem('user_role', response.data.role || 'ROLE_NURSE');
             setToken(response.data.token); // Truyền token lên App tổng
         } catch (err) {
             setError('Tài khoản hoặc mật khẩu không chính xác!');
