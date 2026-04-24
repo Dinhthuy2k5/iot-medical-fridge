@@ -4,7 +4,9 @@ import { User, X } from 'lucide-react';
 
 export default function ProfileModal({ isOpen, onClose }) {
     const [editFullName, setEditFullName] = useState(localStorage.getItem('user_fullName') || '');
-    const [editPassword, setEditPassword] = useState('');
+    // 💡 Thêm 2 state để quản lý mật khẩu cũ và mới
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
     const [profileMessage, setProfileMessage] = useState('');
 
     if (!isOpen) return null;
@@ -13,24 +15,37 @@ export default function ProfileModal({ isOpen, onClose }) {
         e.preventDefault();
         setProfileMessage('');
 
+        // Nếu có nhập mật khẩu mới mà quên nhập mật khẩu cũ thì báo lỗi ngay ở Web
+        if (newPassword && !currentPassword) {
+            setProfileMessage('❌ Vui lòng nhập mật khẩu hiện tại để xác minh!');
+            return;
+        }
+
         try {
             await axios.put('http://localhost:8080/api/v1/users/profile', {
                 fullName: editFullName,
-                newPassword: editPassword
+                currentPassword: currentPassword, // Gửi thêm mật khẩu cũ
+                newPassword: newPassword
             });
 
             localStorage.setItem('user_fullName', editFullName);
-            setProfileMessage('✅ Đã cập nhật cơ sở dữ liệu thành công!');
+            setProfileMessage('✅ Cập nhật thông tin thành công!');
 
             setTimeout(() => {
                 onClose();
                 setProfileMessage('');
-                setEditPassword('');
-            }, 2000);
+                setCurrentPassword('');
+                setNewPassword('');
+            }, 1500);
 
         } catch (error) {
             console.error("Lỗi cập nhật:", error);
-            setProfileMessage('❌ Lỗi: Hệ thống không thể cập nhật thông tin.');
+            // 💡 Bắt chính xác câu lỗi từ Spring Boot gửi sang
+            if (error.response && error.response.status === 400) {
+                setProfileMessage(`❌ Lỗi: ${error.response.data}`);
+            } else {
+                setProfileMessage('❌ Lỗi: Hệ thống không thể cập nhật thông tin.');
+            }
         }
     };
 
@@ -45,7 +60,12 @@ export default function ProfileModal({ isOpen, onClose }) {
                 </h2>
 
                 {profileMessage && (
-                    <div style={{ padding: '10px', marginBottom: '15px', borderRadius: '6px', backgroundColor: '#d1fae5', color: '#047857', fontWeight: 'bold' }}>
+                    <div style={{
+                        padding: '10px', marginBottom: '15px', borderRadius: '6px', fontWeight: 'bold',
+                        // Đổi màu thông báo tùy thuộc vào việc thành công (✅) hay thất bại (❌)
+                        backgroundColor: profileMessage.includes('✅') ? '#d1fae5' : '#fee2e2',
+                        color: profileMessage.includes('✅') ? '#047857' : '#b91c1c'
+                    }}>
                         {profileMessage}
                     </div>
                 )}
@@ -55,9 +75,29 @@ export default function ProfileModal({ isOpen, onClose }) {
                         <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#475569' }}>Họ và tên hiển thị</label>
                         <input type="text" value={editFullName} onChange={(e) => setEditFullName(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
                     </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#475569' }}>Đổi mật khẩu mới</label>
-                        <input type="password" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} placeholder="Để trống nếu không muốn đổi..." style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+
+                    {/* Vùng khu biệt dành cho việc đổi mật khẩu */}
+                    <div style={{ padding: '15px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                        <div style={{ marginBottom: '10px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#475569', fontSize: '14px' }}>Mật khẩu hiện tại</label>
+                            <input
+                                type="password"
+                                value={currentPassword}
+                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                placeholder="Nhập mật khẩu cũ..."
+                                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}
+                            />
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#475569', fontSize: '14px' }}>Mật khẩu mới</label>
+                            <input
+                                type="password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                placeholder="Để trống nếu không đổi..."
+                                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}
+                            />
+                        </div>
                     </div>
 
                     <button type="submit" style={{ marginTop: '10px', backgroundColor: '#0ea5e9', color: 'white', padding: '12px', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
