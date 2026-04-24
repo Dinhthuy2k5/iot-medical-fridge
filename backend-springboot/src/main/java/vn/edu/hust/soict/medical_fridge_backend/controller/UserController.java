@@ -16,12 +16,16 @@ public class UserController {
     private final UserService userService;
 
     @PutMapping("/profile")
-    public ResponseEntity<String> updateProfile(
+    public ResponseEntity<?> updateProfile(
             @RequestBody UpdateProfileRequest request,
-            Principal principal // Tính năng thần thánh: Tự động bắt được người đang gọi API là ai thông qua cái Token!
+            Principal principal
     ) {
-        // Truyền username của người đang gọi API và dữ liệu cần sửa xuống Service
-        userService.updateProfile(principal.getName(), request);
-        return ResponseEntity.ok("Cập nhật thành công");
+        try {
+            userService.updateProfile(principal.getName(), request);
+            return ResponseEntity.ok("Cập nhật thành công");
+        } catch (RuntimeException e) {
+            // 💡 Trả về mã lỗi 400 (Bad Request) kèm câu thông báo lỗi
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

@@ -14,21 +14,25 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public void updateProfile(String username, UpdateProfileRequest request) {
-        // 1. Tìm user đang đăng nhập trong cơ sở dữ liệu
         var user = repository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
-        // 2. Cập nhật tên hiển thị nếu có nhập
         if (request.getFullName() != null && !request.getFullName().isBlank()) {
             user.setFullName(request.getFullName());
         }
 
-        // 3. Cập nhật và mã hóa mật khẩu mới nếu có nhập
+        // 💡 LOGIC KIỂM TRA MẬT KHẨU MỚI
         if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
+            // So sánh mật khẩu cũ nhập vào với mật khẩu lưu trong DB
+            if (request.getCurrentPassword() == null ||
+                    !passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+                // Nếu sai, ném ra lỗi để báo về cho Web
+                throw new RuntimeException("Mật khẩu hiện tại không chính xác!");
+            }
+            // Nếu đúng, mã hóa mật khẩu mới và lưu
             user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         }
 
-        // 4. Lưu lại đè lên bản ghi cũ
         repository.save(user);
     }
 }
