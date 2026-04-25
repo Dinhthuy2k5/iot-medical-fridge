@@ -1,5 +1,7 @@
 # React + Vite
 
+Frontend-react cho dự án giám sát tủ lạnh y tế
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
