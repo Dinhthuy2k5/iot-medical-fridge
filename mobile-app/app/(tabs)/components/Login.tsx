@@ -4,7 +4,7 @@ import { Activity, AlertCircle, Lock, User } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-const SERVER_IP = '192.168.31.105';
+const SERVER_IP = '192.168.31.107';
 const API_BASE = `http://${SERVER_IP}:8080/api/v1`;
 
 export default function Login({ setToken }) {

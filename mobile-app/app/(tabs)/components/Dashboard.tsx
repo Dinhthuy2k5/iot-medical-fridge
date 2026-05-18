@@ -9,7 +9,7 @@ import Header from './Header';
 import ProfileModal from './ProfileModal';
 import RegisterModal from './RegisterModal';
 
-const SERVER_IP = '192.168.31.105';
+const SERVER_IP = '192.168.31.107';
 const API_BASE = `http://${SERVER_IP}:8080/api/v1`;
 
 export default function Dashboard({ onLogout }) {
