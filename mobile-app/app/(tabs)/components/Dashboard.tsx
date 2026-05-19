@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { AlertTriangle, CheckCircle, Info, Thermometer } from 'lucide-react-native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 
@@ -25,6 +25,7 @@ export default function Dashboard({ onLogout }) {
     const [temperatureData, setTemperatureData] = useState([]);
     const [alerts, setAlerts] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
+    const scrollViewRef = useRef(null);
 
     useEffect(() => {
         loadUserProfile();
@@ -71,7 +72,8 @@ export default function Dashboard({ onLogout }) {
     const fetchTemperatureLogs = async (deviceId) => {
         try {
             const response = await axios.get(`${API_BASE}/temperatures/${deviceId}`);
-            const formattedData = response.data.slice(0, 10).reverse().map(log => {
+            // Sửa slice(0, 10) thành slice(0, 30)
+            const formattedData = response.data.slice(0, 30).reverse().map(log => {
                 const dateObj = new Date(log.recordedAt);
                 return { ...log, time: `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}` };
             });
@@ -179,13 +181,38 @@ export default function Dashboard({ onLogout }) {
             {temperatureData.length > 0 ? (
                 <View style={styles.chartContainer}>
                     <Text style={styles.sectionTitle}>Lịch sử biến động</Text>
-                    <LineChart
-                        data={{ labels: temperatureData.map(d => d.time), datasets: [{ data: temperatureData.map(d => d.temperature) }] }}
-                        width={Dimensions.get("window").width - 30}
-                        height={220} yAxisSuffix="°C"
-                        chartConfig={{ backgroundColor: "#ffffff", backgroundGradientFrom: "#ffffff", backgroundGradientTo: "#ffffff", decimalPlaces: 1, color: (opacity = 1) => `rgba(14, 165, 233, ${opacity})`, labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`, propsForDots: { r: "5", strokeWidth: "2", stroke: "#0ea5e9" } }}
-                        bezier style={{ marginVertical: 8, borderRadius: 16 }}
-                    />
+
+                    {/* Thêm ScrollView ngang bọc ngoài LineChart */}
+                    <ScrollView
+                        horizontal={true}
+                        showsHorizontalScrollIndicator={false}
+                        ref={scrollViewRef}
+                        // Tự động cuộn về cuối (bên phải) để hiện mốc thời gian mới nhất
+                        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+                    >
+                        <LineChart
+                            data={{
+                                labels: temperatureData.map((d, i) => i % 2 === 0 ? d.time : ""),
+                                datasets: [{ data: temperatureData.map(d => d.temperature) }]
+                            }}
+                            // Chiều rộng tự giãn nở: Mỗi điểm dữ liệu chiếm 45px, tối thiểu bằng chiều rộng màn hình
+                            width={Math.max(Dimensions.get("window").width - 30, temperatureData.length * 45)}
+                            height={220}
+                            yAxisSuffix="°C"
+                            chartConfig={{
+                                backgroundColor: "#ffffff",
+                                backgroundGradientFrom: "#ffffff",
+                                backgroundGradientTo: "#ffffff",
+                                decimalPlaces: 1,
+                                color: (opacity = 1) => `rgba(14, 165, 233, ${opacity})`,
+                                labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`,
+                                propsForDots: { r: "5", strokeWidth: "2", stroke: "#0ea5e9" },
+                                paddingRight: 20, // CHÌA KHÓA: Fix lỗi biểu đồ bị lệch tràn lề phải
+                            }}
+                            bezier
+                            style={{ marginVertical: 8, borderRadius: 16 }}
+                        />
+                    </ScrollView>
                 </View>
             ) : null}
 
