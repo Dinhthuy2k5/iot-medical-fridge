@@ -41,4 +41,26 @@ public class EmailService {
             log.error("❌ Lỗi khi gửi email cảnh báo: {}", e.getMessage());
         }
     }
+
+    // 2. THÊM HÀM MỚI: Báo cáo đã xử lý an toàn
+    public void sendResolvedEmail(String deviceName) {
+        try {
+            SimpleMailMessage mail = new SimpleMailMessage();
+            mail.setTo(NURSE_EMAIL);
+            mail.setSubject("✅ ĐÃ XỬ LÝ SỰ CỐ: " + deviceName);
+
+            String mailContent = "HỆ THỐNG GIÁM SÁT TỦ LẠNH Y TẾ\n\n"
+                    + "Sự cố tại thiết bị [" + deviceName + "] đã được một nhân viên y tế xác nhận và xử lý.\n"
+                    + "Hệ thống đã tự động tắt báo động trên bảng điều khiển.\n\n"
+                    + "Cảm ơn bạn đã luôn theo dõi và đảm bảo an toàn cho tủ vaccine!";
+
+            mail.setText(mailContent);
+            mailSender.send(mail);
+
+            log.info("✅ ĐÃ GỬI EMAIL XÁC NHẬN XỬ LÝ SỰ CỐ ĐẾN: {}", NURSE_EMAIL);
+
+        } catch (Exception e) {
+            log.error("❌ Lỗi khi gửi email xác nhận xử lý: {}", e.getMessage());
+        }
+    }
 }
