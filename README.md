@@ -23,48 +23,13 @@ Hệ thống IoT toàn diện giúp **giám sát, phân tích và cảnh báo** 
 | 🚨 **Cảnh báo đa kênh** | Tự động phát hiện bất thường, gửi thông báo qua Dashboard (Web/Mobile) và Email khẩn cấp đến nhân viên y tế trực ban |
 | ✅ **Xác nhận xử lý sự cố** | Nhân viên xác nhận "Đã xử lý" để đồng bộ trạng thái toàn hệ thống |
 | 🧠 **Chẩn đoán thông minh** | Phân tích lịch sử nhiệt độ để cảnh báo sớm hao mòn phần cứng (yếu gas, hở gioăng, nguy cơ đóng băng sinh phẩm) |
-| 📊 **Xuất báo cáo tự động** | Trích xuất báo cáo dạng CSV/Excel trực tiếp trên Web hoặc Mobile, hỗ trợ chia sẻ nhanh qua Zalo/Telegram |
+| 📊 **Xuất báo cáo tự động** | Trích xuất báo cáo dạng CSV/Excel trực tiếp trên Web hoặc Mobile |
 
 ---
 
 ## 🏗️ Kiến Trúc Hệ Thống
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         LỚP THIẾT BỊ (Edge Layer)                          │
-│                                                                             │
-│   ┌───────────────┐  One-Wire  ┌────────────────────┐                      │
-│   │   DS18B20     │ ─────────► │  Vi điều khiển     │                      │
-│   │ Cảm biến nhiệt│            │  ESP32 + WiFi      │                      │
-│   └───────────────┘            └────────┬───────────┘                      │
-└────────────────────────────────────────-│───────────────────────────────────┘
-                                          │ WiFi / MQTT Publish
-                                          ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         LỚP MẠNG (Network Layer)                           │
-│                                                                             │
-│                    ┌──────────────────────────────┐                        │
-│                    │     MQTT Broker (HiveMQ)     │                        │
-│                    └──────────────┬───────────────┘                        │
-└───────────────────────────────────│─────────────────────────────────────────┘
-                                    │ Subscribe Topic
-                          ┌─────────▼─────────┐
-                          │                   │ RESTful API
-┌─────────────────────────│─────────────────────────────────┐   ┌────────────────────────┐
-│  LỚP BACKEND & LƯU TRỮ │                   │             │   │  LỚP ỨNG DỤNG (Client) │
-│                         ▼                   │             │   │                        │
-│   ┌──────────────────────────┐              │             │   │  ┌──────────────────┐  │
-│   │  Spring Boot Backend     │──────────────┼─────────────┼──►│  │  React.js        │  │
-│   │  JWT · MQTT Sub · Alerts │              │             │   │  │  Web Dashboard   │  │
-│   └──────────┬───────────────┘              │             │   │  └──────────────────┘  │
-│              │ Lưu trữ Log   │ Kích hoạt    │             │   │                        │
-│              ▼               ▼ cảnh báo     │             │   │  ┌──────────────────┐  │
-│   ┌──────────────┐  ┌─────────────────┐    │             │   │  │  React Native    │  │
-│   │   MySQL DB   │  │  Email Service  │    │             │   │  │  Mobile (Expo)   │  │
-│   └──────────────┘  │  Gmail SMTP     │    │             │   │  └──────────────────┘  │
-│                      └─────────────────┘    │             │   │                        │
-└─────────────────────────────────────────────│─────────────┘   └────────────────────────┘
-```
+![System Architecture](architecture.svg)
 
 ---
 
