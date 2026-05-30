@@ -224,13 +224,13 @@ cd esp32-firmware
 
 ---
 
-## 📸 Giao Diện
+<!-- ## 📸 Giao Diện
 
 > *(Thêm ảnh chụp màn hình Web Dashboard và Mobile App vào đây)*
 
----
+--- -->
 
-## 👥 Nhóm Phát Triển
+## 👥 Người Phát Triển
 
 | Họ và tên | MSSV | Vai trò |
 |---|---|---|
