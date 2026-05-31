@@ -172,6 +172,7 @@ export default function Dashboard({ onLogout }) {
     const latestData = temperatureData.length > 0 ? temperatureData[temperatureData.length - 1] : null;
     const isDanger = latestData && selectedDevice && (latestData.temperature < selectedDevice.minTemp || latestData.temperature > selectedDevice.maxTemp);
 
+    const chartDisplayData = temperatureData.slice(-25);
     const renderCustomDot = (props) => {
         const { cx, cy, payload } = props;
         const isOut = payload.temperature < selectedDevice.minTemp || payload.temperature > selectedDevice.maxTemp;
@@ -285,7 +286,7 @@ export default function Dashboard({ onLogout }) {
 
                             <div style={{ width: '100%', height: '400px' }}>
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={temperatureData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <AreaChart data={chartDisplayData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                         <defs>
                                             <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
                                                 <stop offset="5%" stopColor={isDanger ? "#ef4444" : "#0ea5e9"} stopOpacity={0.3} />
