@@ -157,7 +157,7 @@ Backend chạy tại: `http://localhost:8080`
 ```bash
 cd frontend-react
 npm install
-npm start
+npm run dev
 ```
 
 Web Dashboard chạy tại: `http://localhost:3000`

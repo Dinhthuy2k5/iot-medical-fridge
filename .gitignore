@@ -1,0 +1,19 @@
+# Local secrets
+backend-springboot/src/main/resources/application-secrets.properties
+esp32-firmware/**/config_private.h
+
+# Build outputs
+backend-springboot/target/
+frontend-react/dist/
+mobile-app/.expo/
+
+# Dependencies
+frontend-react/node_modules/
+mobile-app/node_modules/
+
+# Local IDE/system files
+.idea/
+.vscode/
+*.iml
+Thumbs.db
+Desktop.ini
