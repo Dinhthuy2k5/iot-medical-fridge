@@ -1,10 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { API_BASE } from '../../../constants/api';
 import { User, X } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-const API_BASE = 'http://192.168.31.107:8080/api/v1';
 
 export default function ProfileModal({ visible, onClose, initialFullName, onUpdateSuccess }) {
     const [editFullName, setEditFullName] = useState('');

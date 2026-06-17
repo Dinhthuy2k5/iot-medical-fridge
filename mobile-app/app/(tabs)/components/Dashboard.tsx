@@ -1,8 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
-import { Activity, AlertTriangle, CheckCircle, Download, Info, Thermometer } from 'lucide-react-native';
+import { API_BASE } from '../../../constants/api';
+import { Activity, AlertTriangle, CheckCircle, Info, Thermometer } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
@@ -12,8 +11,6 @@ import Header from './Header';
 import ProfileModal from './ProfileModal';
 import RegisterModal from './RegisterModal';
 
-const SERVER_IP = '192.168.31.107';
-const API_BASE = `http://${SERVER_IP}:8080/api/v1`;
 
 export default function Dashboard({ onLogout }) {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -114,53 +111,6 @@ export default function Dashboard({ onLogout }) {
         } catch (error) { }
         finally { setRefreshing(false); }
     }, [selectedDevice]);
-
-    // ==============================================================
-    // [ĐÃ SỬA LỖI XUẤT FILE]: Bỏ tham số encoding gây lỗi undefined
-    // ==============================================================
-    const handleExportCSV = async () => {
-        if (temperatureData.length === 0) {
-            Alert.alert("Thông báo", "Không có dữ liệu để xuất báo cáo.");
-            return;
-        }
-
-        try {
-            const temps = temperatureData.map(d => parseFloat(d.temperature));
-            const avgTemp = (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1);
-            let dangerCount = 0;
-            temperatureData.forEach(d => {
-                if (d.temperature < selectedDevice.minTemp || d.temperature > selectedDevice.maxTemp) dangerCount++;
-            });
-
-            let csvContent = "\ufeffBÁO CÁO PHÂN TÍCH HIỆU SUẤT TỦ LẠNH Y TẾ\n";
-            csvContent += `Thiết bị:,${selectedDevice.name}\n`;
-            csvContent += `Nhiệt độ trung bình:,${avgTemp}°C\n`;
-            csvContent += `Số lần vi phạm an toàn:,${dangerCount} lần\n`;
-            csvContent += `-------------------------------------------\n`;
-            csvContent += "Thời gian đo,Nhiệt độ (°C),Trạng thái\n";
-
-            temperatureData.forEach(row => {
-                const status = (row.temperature < selectedDevice.minTemp || row.temperature > selectedDevice.maxTemp) ? "VƯỢT NGƯỠNG" : "An toàn";
-                csvContent += `${row.fullTime},${row.temperature},${status}\n`;
-            });
-
-            // Sử dụng cacheDirectory
-            const fileUri = FileSystem.cacheDirectory + `BaoCao_${selectedDevice.id}.csv`;
-
-            // Đã sửa lại đúng chính tả: writeAsStringAsync
-            await FileSystem.writeAsStringAsync(fileUri, csvContent);
-
-            if (await Sharing.isAvailableAsync()) {
-                await Sharing.shareAsync(fileUri, { dialogTitle: 'Gửi báo cáo tủ lạnh', mimeType: 'text/csv' });
-            } else {
-                Alert.alert("Lỗi", "Thiết bị không hỗ trợ chia sẻ file.");
-            }
-        } catch (error) {
-            console.error("Lỗi xuất file:", error);
-            Alert.alert("Lỗi", "Không thể tạo file báo cáo. Vui lòng thử lại.");
-        }
-    };
-
     const latestData = temperatureData.length > 0 ? temperatureData[temperatureData.length - 1] : null;
     const isDanger = latestData && selectedDevice && (latestData.temperature < selectedDevice.minTemp || latestData.temperature > selectedDevice.maxTemp);
 
@@ -254,11 +204,6 @@ export default function Dashboard({ onLogout }) {
                 <View style={styles.chartContainer}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
                         <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Lịch sử biến động</Text>
-
-                        <TouchableOpacity style={styles.exportBtn} onPress={handleExportCSV}>
-                            <Download size={14} color="#0ea5e9" style={{ marginRight: 5 }} />
-                            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#0ea5e9' }}>Xuất CSV</Text>
-                        </TouchableOpacity>
                     </View>
 
                     <LineChart
@@ -310,5 +255,4 @@ const styles = StyleSheet.create({
     alertMessage: { color: '#7f1d1d', marginTop: 3, fontWeight: '500' },
     resolveBtn: { backgroundColor: '#ef4444', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8, marginTop: 10 },
     chartContainer: { backgroundColor: 'white', padding: 15, borderRadius: 16, elevation: 1, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5 },
-    exportBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f0f9ff', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: '#bae6fd' }
 });

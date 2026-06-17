@@ -17,3 +17,5 @@ mobile-app/node_modules/
 *.iml
 Thumbs.db
 Desktop.ini
+mobile-app/.env*
+!mobile-app/.env.example

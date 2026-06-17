@@ -1,9 +1,9 @@
 import axios from 'axios';
+import { API_BASE } from '../../../constants/api';
 import { UserPlus, X } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-const API_BASE = 'http://192.168.31.107:8080/api/v1';
 
 export default function RegisterModal({ visible, onClose }) {
     const [username, setUsername] = useState('');
